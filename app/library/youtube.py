@@ -42,27 +42,24 @@ async def fetchChannelData(credentials: dict) -> dict:
     if response.status_code == 403:
         raise QuotaExceededError("Request quota exceeded for the day.")
     
-    elif response.status_code == 401:
-        raise AccessTokenExpiredError("Current access token expired, get a fresh one.")
-    
     channel_resource = response.json()
+    channel_item = channel_resource["items"][0]
     
-    # check if channel exists
-    if "items" not in channel_resource:
-        raise EntityNotFoundError("channel", "Authorized goole account doesn't have a youtube channel.")
-    
-    # extract required channel details
     channel_details = {
-        "name": channel_resource["items"][0]["snippet"]["title"],
-        "logo_url": channel_resource["items"][0]["snippet"]["thumbnails"]["medium"]["url"],
-        "stats": channel_resource["items"][0]["statistics"]
+        "name": channel_item["snippet"]["title"],
+        "logo_url": channel_item["snippet"]["thumbnails"]["medium"]["url"],
+        "stats": {
+            "viewCount": channel_item["statistics"].get("viewCount", 0),
+            "subscriberCount": channel_item["statistics"].get("subscriberCount", 0),
+            "videoCount": channel_item["statistics"].get("videoCount", 0)
+        }
     }
     
     return channel_details
 
 
 async def fetchVideoData(credentials: dict) -> dict:
-    """Fetches video data for logged in youtube channel.
+    """Fetches video data for authorized google account.
 
     Args:
         credentials (dict): Authorization credentials for accessing channel data.
@@ -73,7 +70,7 @@ async def fetchVideoData(credentials: dict) -> dict:
         EntityNotFoundError: If videos for logged in channel doesn't exist.
 
     Returns:
-        dict: Video data for latest 3 videos of the user.
+        dict: Video data for latest 50 videos of the user.
     """
     
     request_uri = "https://www.googleapis.com/youtube/v3/search"
@@ -86,7 +83,7 @@ async def fetchVideoData(credentials: dict) -> dict:
     params = {
         "part": "snippet",
         "forMine": "true",
-        "maxResults": 3,    # get latest 3 videos from channel
+        "maxResults": 50,    # get latest 50 videos from channel
         "order": "date",
         "type": "video",
         "key": KEY

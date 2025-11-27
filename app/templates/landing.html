@@ -1,36 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DeTox</title>
-        <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/images/favicon.ico') }}">
-        <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
-    </head>
-    <body>
-        <!-- Navigation Bar -->
-        <div class="navbar">
-            <a href="{{ url_for('landing') }}"><img src="{{ url_for('static', path='/images/detox_logo.svg') }}" alt="DeTox"></a>
-            <a href="{{ url_for('home') }}">Home</a>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeTox | Clean Your Comments</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/images/favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">DETOX</div>
+        <div class="nav-links">
             <a href="#">About</a>
+            <a href="#">Stories</a>
+            <a href="{{ url_for('home') }}" class="cta-button">Launch App</a>
         </div>
-        <!-- Landing Page -->
-        <div class="landing-content">
-            <div class="bg-left">
-                <img src="{{ url_for('static', path='/images/bg_left.svg') }}" alt="bg">
-            </div>
-            <div class="bg-mid">
-                <img src="{{ url_for('static', path='/images/bg_mid.svg') }}" alt="bg">
-                <p align="center">MAKE YOUR COMMENTS SECTION<br>TOXICITY FREE</p>
-                <a href="{{ url_for('home') }}"><button type="button">Get Started</button></a>
-            </div>
-            <div class="bg-right">
-                <img src="{{ url_for('static', path='/images/bg_right.svg') }}" alt="bg">
-            </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="landing-container">
+        <div class="hero-text">
+            CLEAN UP<br>THE TOXICITY
         </div>
-    </body>
+        <div class="hero-subtext">
+            Deep learning powered moderation for your YouTube channel. 
+            Automatically detect and remove hate speech, threats, and insults.
+        </div>
+        
+        <a href="{{ url_for('home') }}">
+            <button class="cta-main">Get Started</button>
+        </a>
+
+        <!-- Optional: Add a decorative element or image here if available -->
+        <!-- <img src="{{ url_for('static', path='/images/leaf_bg.png') }}" class="hero-image" alt="Clean Environment"> -->
+    </div>
+</body>
 </html>

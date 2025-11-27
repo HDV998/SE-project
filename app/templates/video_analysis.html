@@ -1,83 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DeTox - Video Analysis</title>
-        <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/images/favicon.ico') }}">
-        <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
-        <script> 
-            // user changes window, we delete the graphs stored in out server storage
-            window.onbeforeunload = function deleteGraphs() {
-                fetch("{{ url_for('delete_graphs', video_id = video_id) }}", {method: "DELETE"})
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeTox | Analysis</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/images/favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <script>
+        window.onbeforeunload = function deleteGraphs() {
+            fetch("{{ url_for('delete_graphs', video_id = video_id) }}", { method: "DELETE" })
+        }
+        function rejectComments() {
+            if ("{{ video['toxic_ids']|length }}" == 0) {
+                alert("No toxic comments found to reject.")
             }
-            // confirmation before redirecting to reject comments
-            function rejectComments() {
-                if("{{ video['toxic_ids']|length }}" == 0) {
-                    alert("No toxic comments found to reject.")
-                }
-                else if(confirm("Are you sure you want to reject the toxic comments?\nThis action cannot be undone.") == true) {
-                    document.getElementById("loader").style.display = "block";
-                    document.getElementById("body-content").style.display = "none";
-                    return true;
-                }
-                return false;
+            else if (confirm("Are you sure you want to reject the toxic comments?\nThis action cannot be undone.") == true) {
+                document.getElementById("loader").style.display = "block";
+                return true;
             }
-        </script>
-    </head>
-    <body>
-        <div id="loader" class="center"></div>
-        <!-- Navigation Bar -->
-        <div class="navbar">
-            <a href="{{ url_for('landing') }}"><img src="{{ url_for('static', path='/images/detox_logo.svg') }}" alt="DeTox"></a>
-            <a href="{{ url_for('home') }}">Home</a>
-            <a href="#">About</a>
-            <div class="dropdown">
-                <button class="dropbtn">{{ channel_details["name"] }} <img src="{{ channel_details['logo_url'] }}" alt=""></button>
-                <div class="dropdown-content">
-                    <a href="{{ url_for('logout') }}">Log Out</a>
-                    <a href="{{ url_for('revoke') }}">Revoke Access</a>
+            return false;
+        }
+    </script>
+</head>
+
+<body>
+    <div id="loader"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000;">
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">DETOX</div>
+        <div class="nav-links">
+            <a href="{{ url_for('home') }}">Dashboard</a>
+            <a href="{{ url_for('logout') }}">Log Out</a>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <img src="{{ video['thumbnail_url'] }}" alt="Thumbnail"
+                style="width: 100%; height: auto; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="font-size: 1rem; text-align: center;">{{ video["title"] }}</h3>
+            <hr>
+            <div style="width: 100%; text-align: left; padding-left: 20px;">
+                <p><strong>Views:</strong> {{ video["views"] }}</p>
+                <p><strong>Likes:</strong> {{ video["likes"] }}</p>
+                <p><strong>Comments:</strong> {{ video["comments"] }}</p>
+            </div>
+            <hr>
+            <a href="{{ url_for('home') }}" style="width: 100%;">
+                <button class="cta-button" style="width: 100%; text-align: center;">Back to Dashboard</button>
+            </a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <h2 style="color: #333; margin-bottom: 20px;">Toxicity Analysis</h2>
+
+            {% if has_comments %}
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <h3 style="color: #333; margin-bottom: 15px;">Word Cloud</h3>
+                    <img src="{{ url_for('static', path='/images/word_cloud_'+video['id']+'.png') }}" alt="Word Cloud">
+                </div>
+                <div class="analysis-card">
+                    <h3 style="color: #333; margin-bottom: 15px;">Classification</h3>
+                    <img src="{{ url_for('static', path='/images/classification_graph_'+video['id']+'.png') }}"
+                        alt="Graph">
+                </div>
+
+                <div class="delete-action">
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Found <strong>{{ video['toxic_ids']|length }}</strong> toxic comments.
+                    </p>
+                    <a href="{{ url_for('reject_comments', video_id = video_id) }}">
+                        <button class="delete-btn" onclick="return rejectComments()">
+                            🗑️ REJECT TOXIC COMMENTS
+                        </button>
+                    </a>
                 </div>
             </div>
-        </div>
-        <div id="body-content" class="body-content">
-            <div class="side-bar">
-                <img src="{{ video['thumbnail_url'] }}" alt="" style="border-radius: 2%; width: 80%; height: auto;">
-                
-                
-                <p style="font-size: 18px;">{{ video["title"] }}</p> 
-                <hr>
-                <p>Views: {{ video["views"] }}</p>
-                <p>Likes: {{ video["likes"] }}</p>
-                <p>Comments: {{ video["comments"] }}</p>
+            {% else %}
+            <div style="text-align: center; color: #666; margin-top: 50px;">
+                <h3>No Comments Found</h3>
+                <p>This video doesn't have any comments to analyze yet.</p>
             </div>
-            <div class="main-content">
-                <p style="font-size: 20px;">Analysis</p> 
-                <hr>
-                <div class="analysis-body">
-                    {% if has_comments %}
-                        <div class="analysis-content">
-                            <div class="word-cloud">
-                                <p>Comments Summary</p>
-                                <img src="{{ url_for('static', path='/images/word_cloud_'+video['id']+'.png') }}" alt="">
-                            </div>
-                            <div class="classification-graph">
-                                <p>Comments Classification</p>
-                                <img src="{{ url_for('static', path='/images/classification_graph_'+video['id']+'.png') }}" alt="">
-                            </div>
-                        </div>
-                        <div class="delete-button">
-                            <a href="{{ url_for('reject_comments', video_id = video_id) }}"><button type="button" onclick="return rejectComments()">Reject Toxic Comments</button></a>
-                        </div>
-                    {% else %}
-                        <p style="color: grey;">No Comments Found</p>
-                    {% endif %}
-                </div>
-            </div>
+            {% endif %}
         </div>
-    </body>
+    </div>
+</body>
+
 </html>
