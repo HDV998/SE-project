@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,33 +8,157 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/images/favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">DETOX</div>
         <div class="nav-links">
-            <a href="#">About</a>
-            <a href="#">Stories</a>
+            <a href="#about">About</a>
+            <a href="#stories">Stories</a>
             <a href="{{ url_for('home') }}" class="cta-button">Launch App</a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <div class="landing-container">
-        <div class="hero-text">
-            CLEAN UP<br>THE TOXICITY
-        </div>
-        <div class="hero-subtext">
-            Deep learning powered moderation for your YouTube channel. 
-            Automatically detect and remove hate speech, threats, and insults.
-        </div>
-        
-        <a href="{{ url_for('home') }}">
-            <button class="cta-main">Get Started</button>
-        </a>
+    <section id="hero" class="landing-section hero-section">
+        <div class="hero-content">
+            <div class="hero-text">
+                CLEAN UP<br>THE TOXICITY
+            </div>
+            <div class="hero-subtext">
+                Deep learning powered moderation for your YouTube channel.
+                Automatically detect and remove hate speech, threats, and insults.
+            </div>
 
-        <!-- Optional: Add a decorative element or image here if available -->
-        <!-- <img src="{{ url_for('static', path='/images/leaf_bg.png') }}" class="hero-image" alt="Clean Environment"> -->
-    </div>
+            <a href="{{ url_for('home') }}">
+                <button class="cta-main">Get Started</button>
+            </a>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="landing-section about-section">
+        <div class="section-container">
+            <h2>About DeTox</h2>
+            <p class="section-desc">
+                DeTox uses advanced Natural Language Processing to analyze comments on your YouTube
+                videos in real-time.
+                We identify toxic content so you can maintain a healthy community without the manual
+                effort.
+            </p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>AI Powered</h3>
+                    <p>State-of-the-art machine learning models trained on millions of comments.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Real-time</h3>
+                    <p>Instant analysis of new comments as they appear on your channel.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Secure</h3>
+                    <p>We use official YouTube APIs and never store your personal data.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stories Section -->
+    <section id="stories" class="landing-section stories-section">
+        <div class="section-container">
+            <h2>Success Stories</h2>
+            <p class="section-desc">See what creators are saying about DeTox.</p>
+
+            <div class="carousel-container">
+                <button class="carousel-btn prev-btn" onclick="scrollCarousel(-1)">&#10094;</button>
+                <div class="carousel-track-container">
+                    <div class="carousel-track" id="storiesCarousel">
+                        <!-- Review 1 -->
+                        <div class="review-card">
+                            <div class="stars">★★★★★ <span class="verified">Verified</span></div>
+                            <h3>GameChanger for my channel</h3>
+                            <p>"I used to spend hours deleting hate comments. DeTox does it in
+                                seconds. Now I can focus
+                                on creating content."</p>
+                            <div class="reviewer">
+                                <span class="name">Sarah Jenkins</span>
+                                <span class="date">2 days ago</span>
+                            </div>
+                        </div>
+                        <!-- Review 2 -->
+                        <div class="review-card">
+                            <div class="stars">★★★★★ <span class="verified">Verified</span></div>
+                            <h3>Finally peace of mind</h3>
+                            <p>"The accuracy is incredible. It catches things I would have missed.
+                                Highly recommended
+                                for any serious YouTuber."</p>
+                            <div class="reviewer">
+                                <span class="name">TechWithMike</span>
+                                <span class="date">1 week ago</span>
+                            </div>
+                        </div>
+                        <!-- Review 3 -->
+                        <div class="review-card">
+                            <div class="stars">★★★★☆ <span class="verified">Verified</span></div>
+                            <h3>Great tool</h3>
+                            <p>"Setup was super easy. I love the dashboard view where I can see
+                                exactly what's being
+                                filtered out."</p>
+                            <div class="reviewer">
+                                <span class="name">GamingPro99</span>
+                                <span class="date">3 days ago</span>
+                            </div>
+                        </div>
+                        <!-- Review 4 -->
+                        <div class="review-card">
+                            <div class="stars">★★★★★ <span class="verified">Verified</span></div>
+                            <h3>Saved my mental health</h3>
+                            <p>"The toxicity was getting to me. DeTox cleaned it all up. It's like
+                                having a 24/7
+                                moderator."</p>
+                            <div class="reviewer">
+                                <span class="name">Jessica Vlogs</span>
+                                <span class="date">1 day ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-btn next-btn" onclick="scrollCarousel(1)">&#10095;</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function scrollCarousel(direction) {
+            const track = document.getElementById('storiesCarousel');
+            const cardWidth = 320; // card width + gap
+            track.scrollBy({
+                left: direction * cardWidth,
+                behavior: 'smooth'
+            });
+        }
+
+        // Navbar Color Change on Scroll
+        const navbar = document.querySelector('.navbar');
+        const heroSection = document.querySelector('.hero-section');
+
+        const observerOptions = {
+            rootMargin: "-100px 0px 0px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    navbar.classList.add('nav-scrolled');
+                } else {
+                    navbar.classList.remove('nav-scrolled');
+                }
+            });
+        }, observerOptions);
+
+        observer.observe(heroSection);
+    </script>
 </body>
+
 </html>
