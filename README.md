@@ -20,6 +20,40 @@ YouTube comments and deletes them.
 - Created various views (web-pages) that helps user to navigate through the web-app.
 - Integrated the trained ML model with the web-app to classify and delete comments of the selected video.
 
+### Getting Started:
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/HDV998/SE-project.git
+    cd DeTox
+    ```
+
+2.  **Install dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Download the Model**:
+    - Download the fine-tuned model from the link in "Summary of Implementation".
+    - Place `toxic_model.pth` in `app/machine_learning/model_hub/fine_tuned/`.
+
+4.  **Setup Environment Variables**:
+    - Create a `.env` file in the `app/` directory.
+    - Add your Google OAuth credentials:
+      ```env
+      CLIENT_ID=your_client_id
+      CLIENT_SECRET=your_client_secret
+      SCOPE=https://www.googleapis.com/auth/youtube.force-ssl
+      REDIRECT_URIS=http://localhost:8000/auth/oauth2callback
+      STATE=random_string
+      SESSION_SECRET=random_string
+      ```
+
+5.  **Run the Application**:
+    ```bash
+    uvicorn app.main:app --reload
+    ```
+
 ### Web-App Demo:
 
 

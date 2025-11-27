@@ -17,17 +17,29 @@ def load_model() -> None:
     device = 'cpu' 
     if torch.cuda.is_available():
         device = 'cuda'
-        model.load_state_dict(torch.load(fine_tuned_path))
-        model.to(device)
+        state_dict = torch.load(fine_tuned_path)
     else:
-        model.load_state_dict(torch.load(fine_tuned_path, map_location=device))
+        state_dict = torch.load(fine_tuned_path, map_location=device)
+        
+    # Rename keys to match DetoxClass definition
+    new_state_dict = {}
+    for key, value in state_dict.items():
+        new_key = key
+        if key.startswith("bert."):
+            new_key = key.replace("bert.", "l1.", 1)
+        elif key.startswith("classifier."):
+            new_key = key.replace("classifier.", "l3.", 1)
+        new_state_dict[new_key] = value
+        
+    model.load_state_dict(new_state_dict)
+    model.to(device)
 
 
 def predict(data: pd.DataFrame) -> pd.DataFrame:
     """Predics classes of the comments.
 
     Args:
-        inference_loader (PyTorch DataLoader): A python iterable over a dataset.
+        data (pd.DataFrame): DataFrame containing comments.
 
     Returns:
         pandas DataFrame: DataFrame containing predicted class for comments.

@@ -1,8 +1,11 @@
-# directories / files
+# Custom ignores
 data/
 *.pth
 bert-base-uncased/
 client_secret.json
+.env
+app/.env
+startup_log*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -16,7 +19,9 @@ __pycache__/
 .Python
 build/
 develop-eggs/
+
 dist/
+
 downloads/
 eggs/
 .eggs/
@@ -118,7 +123,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+
 .venv
 env/
 venv/
