@@ -1,8 +1,9 @@
 import pandas as pd
 from wordcloud import WordCloud, STOPWORDS
 import matplotlib.pyplot as plt
+import os
 
-from machine_learning import predict
+from app.machine_learning import predict
 
 class VideoAnalysis:
     """Performs video analysis i.e. comments classification and generating respective plots."""
@@ -58,7 +59,10 @@ class VideoAnalysis:
                                 width = 2500,
                                 height = 1800).generate(" ".join(text))
         
-        comments_cloud.to_file(f"static/images/word_cloud_{video_id}.png")
+        # Construct absolute path to app/static/images
+        base_dir = os.path.dirname(os.path.dirname(__file__)) # Go up from library to app
+        image_path = os.path.join(base_dir, "static", "images", f"word_cloud_{video_id}.png")
+        comments_cloud.to_file(image_path)
         
 
     def createClassificationGraph(self, video_id: str) -> None:
@@ -74,5 +78,9 @@ class VideoAnalysis:
         plt.bar(columns, class_counts, color = "crimson", width = 0.8)
         plt.xlabel("Class")
         plt.ylabel("Comments count")
-        plt.savefig(f"static/images/classification_graph_{video_id}.png", bbox_inches = 'tight', transparent = True)
+        
+        # Construct absolute path to app/static/images
+        base_dir = os.path.dirname(os.path.dirname(__file__)) # Go up from library to app
+        image_path = os.path.join(base_dir, "static", "images", f"classification_graph_{video_id}.png")
+        plt.savefig(image_path, bbox_inches = 'tight', transparent = True)
         plt.close()

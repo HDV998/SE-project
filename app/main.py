@@ -5,11 +5,11 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from config import templates
-from auth import auth_router
-from views import home_view, analysis_view
+from app.config import templates
+from app.auth import auth_router
+from app.views import home_view, analysis_view
 
-from machine_learning import load_tokeninzer, load_model
+from app.machine_learning import load_tokeninzer, load_model
 
 
 # allowing http urls for testing TO BE REMOVED WHILE DEPLOYING
@@ -18,7 +18,7 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # initializing fastapi app, adding static files directory and session middelware for session management
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
 app.add_middleware(SessionMiddleware, secret_key = os.getenv("SESSION_SECRET"))
 
 

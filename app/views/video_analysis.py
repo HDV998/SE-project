@@ -3,12 +3,12 @@ import os
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse, HTMLResponse
 
-from library.youtube import fetchVideoComments, rejectComments
-from library.video_analysis import VideoAnalysis
+from app.library.youtube import fetchVideoComments, rejectComments
+from app.library.video_analysis import VideoAnalysis
 
-from exceptions import *
+from app.exceptions import *
 
-from config import templates
+from app.config import templates
 
 
 analysis_view = APIRouter()
@@ -82,11 +82,15 @@ async def delete_graphs(video_id: str):
         video_id (str): Video id corressponding to which we need to delete the graphs.
     """
     
-    if os.path.exists(f"static/images/word_cloud_{video_id}.png"):
-        os.remove(f"static/images/word_cloud_{video_id}.png")
+    base_dir = os.path.dirname(os.path.dirname(__file__)) # Go up from views to app
+    word_cloud_path = os.path.join(base_dir, "static", "images", f"word_cloud_{video_id}.png")
+    classification_graph_path = os.path.join(base_dir, "static", "images", f"classification_graph_{video_id}.png")
+
+    if os.path.exists(word_cloud_path):
+        os.remove(word_cloud_path)
         
-    if os.path.exists(f"static/images/classification_graph_{video_id}.png"):
-        os.remove(f"static/images/classification_graph_{video_id}.png")
+    if os.path.exists(classification_graph_path):
+        os.remove(classification_graph_path)
         
     return Response(status_code = 200)
         

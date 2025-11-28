@@ -2,7 +2,7 @@ import os
 
 import httpx
 
-from exceptions import *
+from app.exceptions import *
 
 # clint secret key for sending requests to yt api
 KEY = os.getenv("CLIENT_SECRET")

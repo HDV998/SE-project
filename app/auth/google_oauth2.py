@@ -6,7 +6,7 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 
 import httpx
 
-from exceptions import *
+from app.exceptions import *
 
 
 # getting OAuth 2.0 secret variables
@@ -16,7 +16,6 @@ CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 SCOPE = os.getenv("SCOPE")
 REDIRECT_URI = os.getenv("REDIRECT_URIS")
 STATE = os.getenv("STATE")
-
 # router for authorization urls
 auth_router = APIRouter()
 
@@ -38,8 +37,11 @@ async def oauth2callback(request: Request, state: str = None, code: str = None):
         return RedirectResponse(auth_uri)
         
     else:
+        print(f"DEBUG: Received callback with code={code[:10]}... state={state}")
+        
         # ensure that authorization request was called from our application
         if STATE != state:
+            print(f"DEBUG: State mismatch! Expected {STATE}, got {state}")
             return HTMLResponse(f"Invalid state parameter. Please visit the <a href={request.url_for('landing')}>web-app</a> to complete the authorization.")
         
         # retrieve access token
@@ -52,10 +54,17 @@ async def oauth2callback(request: Request, state: str = None, code: str = None):
             "grant_type": "authorization_code"
         }
         
-        async with httpx.AsyncClient() as client:
-            response = await client.post("https://oauth2.googleapis.com/token", data = data)
+        print("DEBUG: Exchanging code for token...")
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post("https://oauth2.googleapis.com/token", data = data)
+            print(f"DEBUG: Token exchange response status: {response.status_code}")
+        except Exception as e:
+            print(f"DEBUG: Token exchange failed: {e}")
+            return HTMLResponse(f"Token exchange failed: {e}")
         
         request.session["credentials"] = response.json()
+        print("DEBUG: Credentials stored in session. Redirecting to home.")
         
         return RedirectResponse(request.url_for("home"))
     

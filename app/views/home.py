@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
 
-from library.youtube import fetchChannelData, fetchVideoData
+from app.library.youtube import fetchChannelData, fetchVideoData
 
-from exceptions import *
+from app.exceptions import *
 
-from config import templates
+from app.config import templates
 
 import asyncio
 
