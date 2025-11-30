@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Request, Response, Body
 from fastapi.responses import RedirectResponse, HTMLResponse
 
 from app.library.youtube import fetchVideoComments, rejectComments
@@ -45,13 +45,16 @@ async def video_analysis(request: Request, video_id: str):
         
         toxic_ids = analysis_obj.getToxicIds()
         request.session["channel_data"]["video_data"][video_id]["toxic_ids"] = toxic_ids
+
+        comments = analysis_obj.comments_df.to_dict("records")
     
     context_dict = {
         "request": request,
         "channel_details": request.session["channel_data"]["channel_details"],
         "video": request.session["channel_data"]["video_data"][video_id],
         "video_id": video_id,
-        "has_comments": has_comments
+        "has_comments": has_comments,
+        "comments": comments
     }
     
     return templates.TemplateResponse("video_analysis.html", context = context_dict)
@@ -93,3 +96,22 @@ async def reject_comments(request: Request, video_id: str):
     del request.session["channel_data"]["video_data"][video_id]["toxic_ids"]
     
     return RedirectResponse(request.url_for("video_analysis", video_id = video_id))
+
+@analysis_view.post("/delete-selected-comments/{video_id}")
+async def delete_selected_comments(
+    request: Request,
+    video_id: str,
+    comment_ids: list[str] = Body(...)
+):
+    if "credentials" not in request.session:
+        raise PermissionDeniedError("Login required.")
+    
+    if not comment_ids:
+        return {"status": "error", "message": "No comments selected."}
+    
+    await rejectComments(request.session["credentials"], comment_ids)
+    
+    return {
+        "status": "success", 
+        "message": f"{len(comment_ids)} comments deleted successfully."
+    }
