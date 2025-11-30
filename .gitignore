@@ -1,7 +1,6 @@
 # Custom ignores
 data/
 *.pth
-bert-base-uncased/
 client_secret.json
 .env
 app/.env
