@@ -43,6 +43,11 @@ async def fetchChannelData(credentials: dict) -> dict:
         raise QuotaExceededError("Request quota exceeded for the day.")
     
     channel_resource = response.json()
+    
+    # if no channel / no videos / invalid id
+    if "items" not in channel_resource or len(channel_resource["items"]) == 0:
+        raise EntityNotFoundError("channel", "Authorized youtube account haven't uploaded videos.")
+    
     channel_item = channel_resource["items"][0]
     
     channel_details = {

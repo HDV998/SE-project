@@ -32,6 +32,7 @@ requests
 rfc3986
 six
 sniffio
+safetensors
 starlette
 tokenizers
 torch

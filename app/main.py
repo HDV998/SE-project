@@ -12,11 +12,9 @@ from app.views import home_view, analysis_view
 from app.machine_learning import load_tokeninzer, load_model
 
 
-# allowing http urls for testing TO BE REMOVED WHILE DEPLOYING
-load_dotenv() # for loading variables from .env file
+load_dotenv()
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-# initializing fastapi app, adding static files directory and session middelware for session management
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
 app.add_middleware(SessionMiddleware, secret_key = os.getenv("SESSION_SECRET"))
@@ -24,7 +22,6 @@ app.add_middleware(SessionMiddleware, secret_key = os.getenv("SESSION_SECRET"))
 
 @app.on_event("startup")
 def startup_event():
-    """Load machine learning model on startup to reduce time in making first request."""
     
     load_tokeninzer()
     load_model()
@@ -32,15 +29,6 @@ def startup_event():
 
 @app.get("/", tags=["Landing Page"])
 def landing(request: Request):
-    """Landing Page of the web-app.
-
-    Args:
-        request (Request): A Request object containing request data sent from client side.
-
-    Returns:
-        TemplateResponse: Landing page with context-dict containing necessary data.
-    """
-    
     return templates.TemplateResponse("landing.html", {"request": request})
 
 
