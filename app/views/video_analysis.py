@@ -37,15 +37,21 @@ async def video_analysis(request: Request, video_id: str):
     
     else:
         has_comments = True
-
         
+        # Filter out comments that were recently deleted (handle eventual consistency)
+        deleted_ids = request.session.get("deleted_ids", [])
+        if deleted_ids:
+            # Filter the dataframe directly
+            analysis_obj.comments_df = analysis_obj.comments_df[~analysis_obj.comments_df["id"].isin(deleted_ids)]
+
         analysis_obj.classifyComments()
         analysis_obj.createWordCloud(video_id)
         analysis_obj.createClassificationGraph(video_id)
         
         toxic_ids = analysis_obj.getToxicIds()
         request.session["channel_data"]["video_data"][video_id]["toxic_ids"] = toxic_ids
-
+        
+        # Convert to list of dicts (already filtered)
         comments = analysis_obj.comments_df.to_dict("records")
     
     context_dict = {
@@ -86,6 +92,11 @@ async def reject_comments(request: Request, video_id: str):
     
     try:
         await rejectComments(request.session["credentials"], toxic_ids)
+        
+        # Add to deleted_ids list
+        if "deleted_ids" not in request.session:
+            request.session["deleted_ids"] = []
+        request.session["deleted_ids"].extend(toxic_ids)
     
     except QuotaExceededError: 
         return HTMLResponse("Cannot connect to youtube right now. Please comeback in a while..")
@@ -110,6 +121,11 @@ async def delete_selected_comments(
         return {"status": "error", "message": "No comments selected."}
     
     await rejectComments(request.session["credentials"], comment_ids)
+    
+    # Add to deleted_ids list
+    if "deleted_ids" not in request.session:
+        request.session["deleted_ids"] = []
+    request.session["deleted_ids"].extend(comment_ids)
     
     return {
         "status": "success", 
