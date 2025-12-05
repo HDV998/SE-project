@@ -181,7 +181,9 @@ async def fetchVideoComments(credentials: dict, video_id: str):
             "part": "snippet",
             "maxResults": 100,
             "pageToken": pageToken,
-            "video_id": video_id,
+            "videoId": video_id,
+            "textFormat": "plainText",
+            "moderationStatus": "published",  # ✅ Only visible comments
             "key": KEY
         }
         
@@ -215,37 +217,116 @@ async def fetchVideoComments(credentials: dict, video_id: str):
             break
         
         
-async def rejectComments(credentials: dict, toxic_ids: list) -> None:
-    """Set moderation status of toxic comment ids provided as 'rejected'.
+# app/library/youtube_sync.py
+import os
+import requests
+from typing import List
 
-    Args:
-        credentials (dict): Authorization credentials for accessing channel data.
-        toxic_ids (list): List of ids of comments which are identified as toxic.
+# import your exception types (fallback to Exception if not defined)
+try:
+    from app.exceptions import AccessTokenExpiredError, QuotaExceededError
+except Exception:
+    AccessTokenExpiredError = Exception
+    QuotaExceededError = Exception
+
+_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
+_CLIENT_ID = os.getenv("CLIENT_ID")
+_CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+
+
+async def rejectComments(credentials: dict, toxic_ids: List[str]) -> None:
+    """
+    Set moderation status of toxic comment ids to 'rejected'.
+    Wrapper around sync implementation for backward compatibility.
+    """
+    # Run sync function in thread pool to avoid blocking event loop
+    import asyncio
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(None, lambda: reject_comments_sync(credentials, toxic_ids))
+
+def reject_comments_sync(credentials: dict, toxic_ids: List[str]) -> None:
+    """
+    Set moderation status of toxic comment ids to 'rejected' (synchronous).
+    Updates credentials['access_token'] in-place if refresh occurs.
 
     Raises:
-        QuotaExceededError: If request quota is utilized.
-        AccessTokenExpiredError: If access token in authorization header has expired.
+      - QuotaExceededError for 403
+      - AccessTokenExpiredError for 401 and refresh failures
+      - Exception for other unexpected failures (includes API response text)
     """
-    
-    request_uri = "https://www.googleapis.com/youtube/v3/comments/setModerationStatus"
+    if not toxic_ids:
+        return
 
-    headers = {
-        "Authorization": f"Bearer {credentials['access_token']}",
-        "Accept": "application/json"
-    }
-    
+    request_uri = "https://www.googleapis.com/youtube/v3/comments/setModerationStatus"
     params = {
-        "id": ",".join(id for id in toxic_ids),
+        "id": ",".join(str(i) for i in toxic_ids),
         "moderationStatus": "rejected",
-        "key": KEY
     }
-    
-    async with httpx.AsyncClient() as client:
-        response = await client.post(request_uri, params = params, headers = headers)
-    
-    # fails when quota exceeds or access token expires
-    if response.status_code == 403:
-        raise QuotaExceededError("Request quota exceeded for the day.")
-    
-    elif response.status_code == 401:
-        raise AccessTokenExpiredError("Current access token expired, get a fresh one.")
+
+    def _do_request(access_token: str):
+        headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
+        resp = requests.post(request_uri, params=params, headers=headers, timeout=30)
+        return resp
+
+    access_token = credentials.get("access_token")
+    if not access_token:
+        raise AccessTokenExpiredError("No access_token in credentials.")
+
+    print(f"DEBUG: Rejecting IDs: {toxic_ids}")
+    # 1) Try with current access token
+    resp = _do_request(access_token)
+    print(f"DEBUG: Reject Response ({resp.status_code}): {resp.text}")
+
+    if resp.status_code in (200, 204):
+        return
+
+    if resp.status_code == 403:
+        # 403 could be quota or insufficient permission
+        raise QuotaExceededError(f"403 Forbidden: {resp.text}")
+
+    if resp.status_code == 401:
+        # Try refresh if refresh_token is available
+        refresh_token = credentials.get("refresh_token")
+        if not refresh_token:
+            raise AccessTokenExpiredError(f"401 Unauthorized and no refresh_token available. Response: {resp.text}")
+
+        if not _CLIENT_ID or not _CLIENT_SECRET:
+            raise AccessTokenExpiredError("CLIENT_ID/CLIENT_SECRET missing; cannot refresh token.")
+
+        token_payload = {
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "client_id": _CLIENT_ID,
+            "client_secret": _CLIENT_SECRET,
+        }
+
+        token_resp = requests.post(_OAUTH_TOKEN_URL, data=token_payload, timeout=30)
+        if token_resp.status_code != 200:
+            raise AccessTokenExpiredError(f"Token refresh failed: {token_resp.status_code} - {token_resp.text}")
+
+        token_json = token_resp.json()
+        new_access_token = token_json.get("access_token")
+        if not new_access_token:
+            raise AccessTokenExpiredError(f"Refresh response missing access_token: {token_resp.text}")
+
+        # Update credentials dict in-place so caller (session/db) can persist it if needed
+        credentials["access_token"] = new_access_token
+        if "expires_in" in token_json:
+            credentials["expires_in"] = token_json["expires_in"]
+        if "scope" in token_json:
+            credentials["scope"] = token_json["scope"]
+
+        # 2) Retry moderation with refreshed token
+        retry_resp = _do_request(new_access_token)
+        if retry_resp.status_code in (200, 204):
+            return
+
+        if retry_resp.status_code == 403:
+            raise QuotaExceededError(f"403 after refresh: {retry_resp.text}")
+        if retry_resp.status_code == 401:
+            raise AccessTokenExpiredError(f"401 after refresh: {retry_resp.text}")
+
+        raise Exception(f"Failed to set moderation after refresh. HTTP {retry_resp.status_code}: {retry_resp.text}")
+
+    # other unexpected errors
+    raise Exception(f"Failed to set moderation. HTTP {resp.status_code}: {resp.text}")

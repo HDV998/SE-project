@@ -1,6 +1,6 @@
 # Custom ignores
 data/
-*.pth
+# *.pth
 client_secret.json
 .env
 app/.env
