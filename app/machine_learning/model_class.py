@@ -9,7 +9,7 @@ class DetoxClass(Module):
         """Constructor. Defines layers of the model."""
         
         super(DetoxClass, self).__init__()
-        self.l1 = BertModel.from_pretrained(pretrained_path)
+        self.l1 = BertModel.from_pretrained("bert-base-uncased")
         self.l2 = Dropout(0.3)
         self.l3 = Linear(768, 6)
     
